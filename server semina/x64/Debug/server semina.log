@@ -1,0 +1,3 @@
+﻿  1week.cpp
+C:\코드\server semina\server semina\1week.cpp(115,6): warning C4326: 'wmain'의 반환 형식이 'int'이어야 하는데 'void'입니다.
+  server semina.vcxproj -> C:\코드\server semina\x64\Debug\server semina.exe
