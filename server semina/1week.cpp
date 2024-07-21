@@ -7,31 +7,28 @@
 using namespace std;
 
 #define NUM_THREADS 5
-#define BUFF_SIZE 65536
+#define BUFF_SIZE 40
 
 struct COPY_CHUNK : OVERLAPPED
 {
-    HANDLE _hfSrc, _hfDst; // 소스 및 타깃 파일 핸들
-    BYTE _arBuff[BUFF_SIZE]; // 파일 복사를 위한 버퍼
-    BOOL _isRead;  // true: 읽기 완료, false: 쓰기 완료
-    DWORD _errCode;  // 에러코드 저장 필드
+    HANDLE _hfSrc, _hfDst;
+    BYTE _arBuff[BUFF_SIZE];
+    BOOL _isRead;
+    DWORD _errCode;
     DWORD _startOffset;
     DWORD _endOffset;
 
-    //초기화
     COPY_CHUNK(HANDLE hfSrc, HANDLE hfDst, DWORD startOffset, DWORD endOffset)
-        :_hfSrc(hfSrc), _hfDst(hfDst), _startOffset(startOffset), _endOffset(endOffset)
+        : _hfSrc(hfSrc), _hfDst(hfDst), _startOffset(startOffset), _endOffset(endOffset)
     {
-        //overlap 구조체 초기화
         ZeroMemory(this, sizeof(OVERLAPPED));
-        _isRead = TRUE; // 읽기 완료
+        Offset = startOffset;
+        _isRead = TRUE;
+        _errCode = ERROR_SUCCESS;
     }
 };
 
 typedef COPY_CHUNK* PCOPY_CHUNK;
-
-#define HasOverlappedIoCompleted(lpOverlapped)\
-(((DWORD)(lpOverlapped)->Internal) != STATUS_PENDING)
 
 VOID CALLBACK CopyAPCProc(DWORD dwErrCode, DWORD dwTranBytes, LPOVERLAPPED pOL)
 {
@@ -46,7 +43,7 @@ VOID CALLBACK CopyAPCProc(DWORD dwErrCode, DWORD dwTranBytes, LPOVERLAPPED pOL)
     BOOL bIsOK = FALSE;
     if (pCC->_isRead)
     {
-        printf(" => Read bytes : %d \n", pCC->Offset);
+        printf(" Read bytes : %d at offset %d\n", dwTranBytes, pCC->Offset);
         bIsOK = WriteFileEx(
             pCC->_hfDst, pCC->_arBuff, dwTranBytes, pOL, CopyAPCProc
         );
@@ -56,12 +53,14 @@ VOID CALLBACK CopyAPCProc(DWORD dwErrCode, DWORD dwTranBytes, LPOVERLAPPED pOL)
     {
         pCC->Offset += dwTranBytes;
 
-        printf(" => Wrote bytes: %d\n", pCC->Offset);
-        bIsOK = ReadFileEx(
-            pCC->_hfSrc, pCC->_arBuff, BUFF_SIZE, pOL, CopyAPCProc
-        );
-
-        pCC->_isRead = TRUE;
+        printf(" => Wrote bytes: %d at offset %d\n", dwTranBytes, pCC->Offset);
+        if (pCC->Offset < pCC->_endOffset)
+        {
+            bIsOK = ReadFileEx(
+                pCC->_hfSrc, pCC->_arBuff, BUFF_SIZE, pOL, CopyAPCProc
+            );
+            pCC->_isRead = TRUE;
+        }
     }
 
     if (!bIsOK)
@@ -84,17 +83,14 @@ DWORD WINAPI ThreadProc(LPVOID lpParam)
     PCOPY_CHUNK pCC = (PCOPY_CHUNK)lpParam;
 
     DWORD dwErrCode = 0;
-    //읽기
     BOOL bIsOK = ReadFileEx(
         pCC->_hfSrc, pCC->_arBuff, BUFF_SIZE, pCC, CopyAPCProc
     );
 
-    cout << "bIsOK: " << bIsOK << endl;
-
-    if (!bIsOK) //bIsOK가 false일 경우 -> ReadFileEx 실패
+    if (!bIsOK)
     {
         dwErrCode = GetLastError();
-        if (dwErrCode != ERROR_IO_PENDING) //읽기 실패
+        if (dwErrCode != ERROR_IO_PENDING)
         {
             cout << "~~~ ReadFileEx failed, ErrCode: " << dwErrCode << endl;
             return 1;
@@ -108,7 +104,7 @@ DWORD WINAPI ThreadProc(LPVOID lpParam)
         if (dwWaitRet == WAIT_OBJECT_0)
             break;
 
-        if (dwWaitRet != WAIT_IO_COMPLETION) //대기 실패
+        if (dwWaitRet != WAIT_IO_COMPLETION)
         {
             dwErrCode = GetLastError();
             cout << "~~~ WaitForSingleObjectEx failed, ErrCode: " << dwErrCode << endl;
@@ -154,18 +150,15 @@ void _tmain(int argc, _TCHAR* argv[])
 
     vector<HANDLE> threads(NUM_THREADS);
     vector<PCOPY_CHUNK> chunks(NUM_THREADS);
-    DWORD chunkSize = 20; //간격
     DWORD dwErrCode = 0;
 
     for (int i = 0; i < NUM_THREADS; i++)
     {
-        DWORD startOffset = i * chunkSize; //0 20 40 60 80
-        DWORD endOffset = startOffset + chunkSize;  //20 40 60 80 100
+        DWORD startOffset = i * BUFF_SIZE;
+        DWORD endOffset = startOffset + BUFF_SIZE;
 
         cout << "hSrcFile: " << hSrcFile << " hDstFile: " << hDstFile << " startOffset: " << startOffset << " endOffset: " << endOffset << endl;
         PCOPY_CHUNK pCC = new COPY_CHUNK(hSrcFile, hDstFile, startOffset, endOffset);
-
-        // Print all relevant members of COPY_CHUNK
         cout << "pCC의 _hfSrc: " << pCC->_hfSrc << endl;
         cout << "pCC의 _hfDst: " << pCC->_hfDst << endl;
         cout << "pCC의 _isRead: " << pCC->_isRead << endl;
@@ -176,18 +169,17 @@ void _tmain(int argc, _TCHAR* argv[])
         cout << "pCC의 OffsetHigh: " << pCC->OffsetHigh << endl;
 
         chunks[i] = pCC;
-
-        threads[i] = CreateThread(NULL, 0, ThreadProc, pCC, 0, NULL); //비동기 입출력이므로 한 파일에 여러 스레드 접근 가능
+        threads[i] = CreateThread(NULL, 0, ThreadProc, pCC, 0, NULL);
     }
 
     WaitForMultipleObjects(NUM_THREADS, threads.data(), TRUE, INFINITE);
 
-    for (int i = 0; i < NUM_THREADS; i++) //close handle
+    for (int i = 0; i < NUM_THREADS; i++)
     {
         CloseHandle(threads[i]);
         delete chunks[i];
     }
-    //열린 파일 닫기
+
     CloseHandle(hSrcFile);
     CloseHandle(hDstFile);
     CloseHandle(g_hevExit);
