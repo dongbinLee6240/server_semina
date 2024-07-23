@@ -3,8 +3,8 @@
   "WorkspaceRootPath": "C:\\\uCF54\uB4DC\\server_semina\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{5BAB9A63-E9C7-4A1D-B71A-9133BE9BF4D1}|server semina\\server semina.vcxproj|C:\\\uCF54\uB4DC\\server_semina\\server semina\\1week.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{5BAB9A63-E9C7-4A1D-B71A-9133BE9BF4D1}|server semina\\server semina.vcxproj|solutionrelative:server semina\\1week.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{5BAB9A63-E9C7-4A1D-B71A-9133BE9BF4D1}|server semina\\server semina.vcxproj|C:\\\uCF54\uB4DC\\server_semina\\server semina\\ProfHw.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{5BAB9A63-E9C7-4A1D-B71A-9133BE9BF4D1}|server semina\\server semina.vcxproj|solutionrelative:server semina\\ProfHw.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -19,12 +19,12 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "1week.cpp",
-              "DocumentMoniker": "C:\\\uCF54\uB4DC\\server_semina\\server semina\\1week.cpp",
-              "RelativeDocumentMoniker": "server semina\\1week.cpp",
-              "ToolTip": "C:\\\uCF54\uB4DC\\server_semina\\server semina\\1week.cpp",
-              "RelativeToolTip": "server semina\\1week.cpp",
-              "ViewState": "AQIAAHQAAAAAAAAAAAAEwHkAAABCAAAA",
+              "Title": "ProfHw.cpp",
+              "DocumentMoniker": "C:\\\uCF54\uB4DC\\server_semina\\server semina\\ProfHw.cpp",
+              "RelativeDocumentMoniker": "server semina\\ProfHw.cpp",
+              "ToolTip": "C:\\\uCF54\uB4DC\\server_semina\\server semina\\ProfHw.cpp",
+              "RelativeToolTip": "server semina\\ProfHw.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAoAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-07-20T06:30:22.642Z",
               "EditorCaption": ""
