@@ -7,7 +7,7 @@
 using namespace std;
 
 #define NUM_THREADS 5
-#define BUFF_SIZE 40
+#define BUFF_SIZE 20
 
 struct COPY_CHUNK : OVERLAPPED
 {
@@ -153,12 +153,14 @@ void _tmain(int argc, _TCHAR* argv[])
     vector<PCOPY_CHUNK> chunks(NUM_THREADS);
     DWORD dwErrCode = 0;
 
+    vector<DWORD> startOffset(NUM_THREADS);
+    vector<DWORD> endOffset(NUM_THREADS);
     for (int i = 0; i < NUM_THREADS; i++)
     {
-        DWORD startOffset = i * BUFF_SIZE;
-        DWORD endOffset = startOffset + BUFF_SIZE;
+        startOffset[i] = i * BUFF_SIZE;
+        endOffset[i] = startOffset[i] + BUFF_SIZE;
 
-        PCOPY_CHUNK pCC = new COPY_CHUNK(hSrcFile, hDstFile, startOffset, endOffset);
+        PCOPY_CHUNK pCC = new COPY_CHUNK(hSrcFile, hDstFile, startOffset[i], endOffset[i]);
 
         chunks[i] = pCC; //동적 해제용 chunks
         threads[i] = CreateThread(NULL, 0, ThreadProc, pCC, 0, NULL);
@@ -184,4 +186,6 @@ void _tmain(int argc, _TCHAR* argv[])
 *  즉 arBuff[0] ~ arBuff[9]까지 저장된 숫자와 arBuff[10] ~ arBuff[20]까지 저장된 숫자가 같음
 *  -> 즉 BUFF_SIZE를 20으로 설정하면 50개의 숫자만 복사가 됨. 하지만 dwTranBytes는 20으로 표기됨.
 *  BUFF_SIZE를 40으로 설정하면 100개의 숫자가 복사됨
+* 
+*  --------------> 해결
 */
